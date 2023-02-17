@@ -1,5 +1,6 @@
 package com.fatjon.orderservice.service;
 
+import com.fatjon.orderservice.dto.InventoryResponse;
 import com.fatjon.orderservice.dto.OrderLineItemsDto;
 import com.fatjon.orderservice.dto.OrderRequest;
 import com.fatjon.orderservice.model.Order;
@@ -8,7 +9,9 @@ import com.fatjon.orderservice.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 @RequiredArgsConstructor
@@ -17,6 +20,7 @@ import java.util.UUID;
 public class OrderService {
 
     private final OrderRepository orderRepository;
+    private final WebClient webClient;
 
     public void placeOrder(OrderRequest orderRequest){
         Order order = new Order();
@@ -29,7 +33,24 @@ public class OrderService {
 
         order.setOrderLineItemsList(orderLineItems);
 
-        orderRepository.save(order);
+        List<String> skuCodes = order.getOrderLineItemsList().stream()
+                .map(OrderLineItems::getSkuCode)
+                .toList();
+
+        //Call Inventory Service, and place order if product is in stock
+        InventoryResponse[] inventoryResponses = webClient.get()
+                .uri("http://localhost:8083/api/inventory",
+                        uriBuilder -> uriBuilder.queryParam("scuCode", skuCodes).build())
+                .retrieve()
+                .bodyToMono(InventoryResponse[].class)
+                .block();
+        boolean allProductsInStock = Arrays.stream(inventoryResponses).allMatch(InventoryResponse::isInStock);
+
+       if (allProductsInStock) {
+           orderRepository.save(order);
+       }else {
+           throw new IllegalArgumentException("Product not in stock");
+       }
         log.info("Order {} saved sucessfully!", order.getId());
 
     }

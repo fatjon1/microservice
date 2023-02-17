@@ -1,9 +1,13 @@
 package com.fatjon.inventoryservice.controller;
 
+import com.fatjon.inventoryservice.dto.InventoryResponse;
 import com.fatjon.inventoryservice.service.InventoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/inventory")
@@ -13,7 +17,7 @@ public class InventoryController {
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public Boolean isInStock(@PathVariable("sku-code") String skuCode ){
+    public List<InventoryResponse> isInStock(@RequestParam List<String> skuCode ){
 
         return inventoryService.isInStock(skuCode);
     }
