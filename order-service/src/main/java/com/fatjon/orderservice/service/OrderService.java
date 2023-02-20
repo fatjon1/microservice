@@ -8,12 +8,18 @@ import com.fatjon.orderservice.model.OrderLineItems;
 import com.fatjon.orderservice.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.server.ResponseStatusException;
+import reactor.core.publisher.Mono;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+
 @RequiredArgsConstructor
 @Slf4j
 @Service
@@ -40,18 +46,23 @@ public class OrderService {
         //Call Inventory Service, and place order if product is in stock
         InventoryResponse[] inventoryResponses = webClient.get()
                 .uri("http://localhost:8083/api/inventory",
-                        uriBuilder -> uriBuilder.queryParam("scuCode", skuCodes).build())
+
+                        uriBuilder -> uriBuilder.queryParam("skuCode", skuCodes)
+                                .build())
                 .retrieve()
                 .bodyToMono(InventoryResponse[].class)
                 .block();
         boolean allProductsInStock = Arrays.stream(inventoryResponses).allMatch(InventoryResponse::isInStock);
 
+        List<InventoryResponse> inventoryResponsesList = Arrays.stream(inventoryResponses).collect(Collectors.toList());
+
        if (allProductsInStock) {
            orderRepository.save(order);
        }else {
+
            throw new IllegalArgumentException("Product not in stock");
        }
-        log.info("Order {} saved sucessfully!", order.getId());
+     //   log.info("Order {} saved sucessfully!", order.getId());
 
     }
 
