@@ -1,5 +1,5 @@
 
-<h1 align="center"> Microservice</h1>  
+<h1 align="center"> Microservices</h1>  
 
 ![alt text](https://github.com/fatjon1/microservice/blob/Service_Discovery_Added/microservice.jpg)  
 A simple Microservice Architecture project using Spring Boot.  
