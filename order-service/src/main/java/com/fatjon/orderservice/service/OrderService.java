@@ -3,18 +3,15 @@ package com.fatjon.orderservice.service;
 import com.fatjon.orderservice.dto.InventoryResponse;
 import com.fatjon.orderservice.dto.OrderLineItemsDto;
 import com.fatjon.orderservice.dto.OrderRequest;
+import com.fatjon.orderservice.event.OrderPlacedEvent;
 import com.fatjon.orderservice.model.Order;
 import com.fatjon.orderservice.model.OrderLineItems;
 import com.fatjon.orderservice.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.MediaType;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
-import org.springframework.web.server.ResponseStatusException;
-import reactor.core.publisher.Mono;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -27,6 +24,7 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final WebClient.Builder webClientBuilder;
+    private final KafkaTemplate<String, OrderPlacedEvent> kafkaTemplate;
 
     public String placeOrder(OrderRequest orderRequest){
         Order order = new Order();
@@ -58,6 +56,7 @@ public class OrderService {
 
        if (allProductsInStock) {
            orderRepository.save(order);
+           kafkaTemplate.send("notificationTopic", new OrderPlacedEvent(order.getOrderNumber()));
            return "Oreder placed sucessfully!";
        }else {
 

@@ -9,3 +9,4 @@ A simple Microservice Architecture project using Spring Boot.
 -Secure Microservices using Keycloak  
 -Implement Circuit Breaker using Resiliance4j  
 -Implement Distributed Tracing using Zipkin and Spring Cloud Sleuth  
+-Event Driven Architecture using Kafka
